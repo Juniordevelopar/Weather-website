@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClimateView - Modern Weather Dashboard</title>
+    <title>ClimateView - Advanced Weather Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS for map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --primary-color: #ff6f00;
@@ -162,6 +164,13 @@
             color: var(--dark-color);
         }
 
+        #state {
+            font-size: 18px;
+            font-weight: 400;
+            color: #666;
+            margin-top: 5px;
+        }
+
         #date {
             font-size: 16px;
             font-weight: 400;
@@ -205,9 +214,8 @@
         }
 
         .details-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
@@ -215,7 +223,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            min-width: 140px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
             transition: all 0.3s ease;
         }
 
@@ -228,12 +238,17 @@
             color: var(--primary-color);
         }
 
-        .detail p:first-child {
+        .detail-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
             font-size: 14px;
             color: #666;
         }
 
-        .detail p:last-child {
+        .detail-value {
             font-size: 18px;
             font-weight: 500;
         }
@@ -305,71 +320,102 @@
             margin-top: 5px;
         }
 
-        .highlight-card {
+        .hourly-forecast-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .hourly-item {
+            min-width: 100px;
             display: flex;
             flex-direction: column;
-        }
-
-        .highlight-card h4 {
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-
-        .highlight-content {
-            flex: 1;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            transition: all 0.3s ease;
         }
 
-        .highlight-content i {
-            font-size: 24px;
-            color: var(--primary-color);
-            animation: pulse 2s infinite;
+        .hourly-item:hover {
+            transform: scale(1.05);
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+        .hourly-time {
+            font-weight: 500;
+            margin-bottom: 5px;
         }
 
-        .highlight-content p {
-            font-size: 24px;
+        .hourly-item img {
+            width: 40px;
+            height: 40px;
+            margin: 5px 0;
+        }
+
+        .hourly-temp {
+            font-size: 16px;
             font-weight: 600;
         }
 
-        .sun-times {
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .sun-times div {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .uv-level, .aqi-level {
+        /* Map Styles */
+        #weather-map {
+            height: 400px;
+            width: 100%;
+            border-radius: 15px;
             margin-top: 15px;
-            height: 6px;
-            background-color: #e0e0e0;
-            border-radius: 3px;
-            position: relative;
-            overflow: hidden;
+            z-index: 1;
         }
 
-        .uv-level::after, .aqi-level::after {
-            content: '';
+        .map-container {
+            position: relative;
+        }
+
+        .map-controls {
             position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .map-layer-btn {
+            display: block;
+            margin: 5px 0;
+            padding: 5px 10px;
             background: var(--gradient);
-            width: var(--level-width, 50%);
-            border-radius: 3px;
-            transition: width 0.5s ease;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .map-layer-btn:hover {
+            background: var(--primary-color);
+        }
+
+        .air-quality-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .air-quality-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .air-quality-value {
+            font-weight: 600;
+            margin-top: 5px;
         }
 
         .loader {
@@ -417,7 +463,7 @@
         }
 
         @media (max-width: 768px) {
-            .card-container {
+            .details-container {
                 grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
             
@@ -428,9 +474,9 @@
             #temperature {
                 font-size: 42px;
             }
-            
-            .detail {
-                min-width: 120px;
+
+            #weather-map {
+                height: 300px;
             }
         }
 
@@ -447,15 +493,6 @@
                 padding: 20px;
             }
             
-            .card-container {
-                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                gap: 15px;
-            }
-            
-            .detail {
-                min-width: 100px;
-            }
-            
             #city {
                 font-size: 24px;
             }
@@ -463,9 +500,9 @@
             #temperature {
                 font-size: 38px;
             }
-            
-            .highlight-content p {
-                font-size: 20px;
+
+            #weather-map {
+                height: 250px;
             }
         }
     </style>
@@ -490,6 +527,7 @@
                 <div id="weather-content" class="hidden">
                     <div class="main-info">
                         <h2 id="city">--</h2>
+                        <h3 id="state">--</h3>
                         <h3 id="date">--</h3>
                         <div class="temp-container">
                             <img id="weather-icon" src="" alt="Weather icon">
@@ -500,79 +538,154 @@
                     <div class="details-container">
                         <div class="detail">
                             <i class="fas fa-temperature-high"></i>
-                            <div>
-                                <p>Feels Like</p>
-                                <p id="feels-like">--°C</p>
+                            <div class="detail-content">
+                                <span class="detail-label">Feels Like</span>
+                                <span class="detail-value" id="feels-like">--°C</span>
                             </div>
                         </div>
                         <div class="detail">
                             <i class="fas fa-wind"></i>
-                            <div>
-                                <p>Wind</p>
-                                <p id="wind">-- km/h</p>
+                            <div class="detail-content">
+                                <span class="detail-label">Wind</span>
+                                <span class="detail-value" id="wind">-- km/h</span>
                             </div>
                         </div>
                         <div class="detail">
                             <i class="fas fa-tint"></i>
-                            <div>
-                                <p>Humidity</p>
-                                <p id="humidity">--%</p>
+                            <div class="detail-content">
+                                <span class="detail-label">Humidity</span>
+                                <span class="detail-value" id="humidity">--%</span>
                             </div>
                         </div>
                         <div class="detail">
                             <i class="fas fa-compress-arrows-alt"></i>
-                            <div>
-                                <p>Pressure</p>
-                                <p id="pressure">-- hPa</p>
+                            <div class="detail-content">
+                                <span class="detail-label">Pressure</span>
+                                <span class="detail-value" id="pressure">-- hPa</span>
+                            </div>
+                        </div>
+                        <div class="detail">
+                            <i class="fas fa-eye"></i>
+                            <div class="detail-content">
+                                <span class="detail-label">Visibility</span>
+                                <span class="detail-value" id="visibility">-- km</span>
+                            </div>
+                        </div>
+                        <div class="detail">
+                            <i class="fas fa-cloud"></i>
+                            <div class="detail-content">
+                                <span class="detail-label">Cloud Cover</span>
+                                <span class="detail-value" id="cloud">--%</span>
+                            </div>
+                        </div>
+                        <div class="detail">
+                            <i class="fas fa-umbrella"></i>
+                            <div class="detail-content">
+                                <span class="detail-label">Precipitation</span>
+                                <span class="detail-value" id="precip">-- mm</span>
+                            </div>
+                        </div>
+                        <div class="detail">
+                            <i class="fas fa-sun"></i>
+                            <div class="detail-content">
+                                <span class="detail-label">UV Index</span>
+                                <span class="detail-value" id="uv-index">--</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="forecast-container" class="forecast-container">
-                <h3 class="section-title">2-Day Forecast</h3>
+            <div class="card">
+                <h3 class="section-title">Wind Details</h3>
+                <div class="details-container">
+                    <div class="detail">
+                        <i class="fas fa-wind"></i>
+                        <div class="detail-content">
+                            <span class="detail-label">Direction</span>
+                            <span class="detail-value" id="wind-dir">--</span>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-compass"></i>
+                        <div class="detail-content">
+                            <span class="detail-label">Degree</span>
+                            <span class="detail-value" id="wind-degree">--°</span>
+                        </div>
+                    </div>
+                    <div class="detail">
+                        <i class="fas fa-bolt"></i>
+                        <div class="detail-content">
+                            <span class="detail-label">Gust Speed</span>
+                            <span class="detail-value" id="wind-gust">-- km/h</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">Hourly Forecast (Next 24 Hours)</h3>
+                <div id="hourly-forecast" class="hourly-forecast-container"></div>
+            </div>
+
+            <div id="forecast-container" class="card">
+                <h3 class="section-title">7-Day Forecast</h3>
                 <div id="forecast" class="card-container"></div>
             </div>
-            
-            <div id="highlights-container" class="highlights-container">
-                <h3 class="section-title">Today's Highlights</h3>
-                <div class="card-container">
-                    <div class="card highlight-card">
-                        <h4>UV Index</h4>
-                        <div class="highlight-content">
-                            <i class="fas fa-sun"></i>
-                            <p id="uv-index">--</p>
-                        </div>
-                        <div id="uv-level" class="uv-level"></div>
+
+            <div class="card map-container">
+                <h3 class="section-title">Interactive Weather Map</h3>
+                <div id="weather-map"></div>
+                <div class="map-controls">
+                    <button class="map-layer-btn" data-layer="temp">Temperature</button>
+                    <button class="map-layer-btn" data-layer="precip">Precipitation</button>
+                    <button class="map-layer-btn" data-layer="wind">Wind</button>
+                    <button class="map-layer-btn" data-layer="cloud">Cloud Cover</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">Air Quality Details</h3>
+                <div class="air-quality-grid">
+                    <div class="air-quality-item">
+                        <div>Carbon Monoxide (CO)</div>
+                        <div class="air-quality-value" id="air-co">--</div>
                     </div>
-                    <div class="card highlight-card">
-                        <h4>Sunrise & Sunset</h4>
-                        <div class="highlight-content sun-times">
-                            <div>
-                                <i class="fas fa-sunrise"></i>
-                                <p id="sunrise">--:--</p>
-                            </div>
-                            <div>
-                                <i class="fas fa-sunset"></i>
-                                <p id="sunset">--:--</p>
-                            </div>
+                    <div class="air-quality-item">
+                        <div>Nitrogen Dioxide (NO₂)</div>
+                        <div class="air-quality-value" id="air-no2">--</div>
+                    </div>
+                    <div class="air-quality-item">
+                        <div>Ozone (O₃)</div>
+                        <div class="air-quality-value" id="air-o3">--</div>
+                    </div>
+                    <div class="air-quality-item">
+                        <div>Sulfur Dioxide (SO₂)</div>
+                        <div class="air-quality-value" id="air-so2">--</div>
+                    </div>
+                    <div class="air-quality-item">
+                        <div>PM2.5</div>
+                        <div class="air-quality-value" id="air-pm25">--</div>
+                    </div>
+                    <div class="air-quality-item">
+                        <div>PM10</div>
+                        <div class="air-quality-value" id="air-pm10">--</div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="detail">
+                        <i class="fas fa-lungs"></i>
+                        <div class="detail-content">
+                            <span class="detail-label">US EPA Index</span>
+                            <span class="detail-value" id="air-epa">--</span>
                         </div>
                     </div>
-                    <div class="card highlight-card">
-                        <h4>Visibility</h4>
-                        <div class="highlight-content">
-                            <i class="fas fa-eye"></i>
-                            <p id="visibility">-- km</p>
+                    <div class="detail">
+                        <i class="fas fa-lungs"></i>
+                        <div class="detail-content">
+                            <span class="detail-label">UK Defra Index</span>
+                            <span class="detail-value" id="air-defra">--</span>
                         </div>
-                    </div>
-                    <div class="card highlight-card">
-                        <h4>Air Quality</h4>
-                        <div class="highlight-content">
-                            <i class="fas fa-lungs"></i>
-                            <p id="air-quality">--</p>
-                        </div>
-                        <div id="aqi-level" class="aqi-level"></div>
                     </div>
                 </div>
             </div>
@@ -580,12 +693,14 @@
     </div>
     
     <footer>
-        <p>Created by Ashish Kumar with ❤️ | Weather data by <a href="https://www.weatherapi.com/" target="_blank">WeatherAPI</a></p>
+        <p>Created with ❤️ by <a href="#" target="_blank">Ashish Kumar</a> | Weather data by <a href="https://weatherapi.com/" target="_blank">WeatherAPI</a></p>
     </footer>
 
+    <!-- Leaflet JS for map -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // API Configuration
-        const API_KEY = 'd959d64b6be14a61b45154942241110';
+        const API_KEY = 'a631012c691741bf89193110250304';
         const BASE_URL = 'https://api.weatherapi.com/v1';
 
         // DOM Elements
@@ -595,6 +710,7 @@
         const loader = document.getElementById('loader');
         const weatherContent = document.getElementById('weather-content');
         const cityElement = document.getElementById('city');
+        const stateElement = document.getElementById('state');
         const dateElement = document.getElementById('date');
         const weatherIcon = document.getElementById('weather-icon');
         const temperatureElement = document.getElementById('temperature');
@@ -603,14 +719,102 @@
         const windElement = document.getElementById('wind');
         const humidityElement = document.getElementById('humidity');
         const pressureElement = document.getElementById('pressure');
-        const forecastContainer = document.getElementById('forecast');
-        const uvIndexElement = document.getElementById('uv-index');
-        const uvLevelElement = document.getElementById('uv-level');
-        const sunriseElement = document.getElementById('sunrise');
-        const sunsetElement = document.getElementById('sunset');
         const visibilityElement = document.getElementById('visibility');
-        const airQualityElement = document.getElementById('air-quality');
-        const aqiLevelElement = document.getElementById('aqi-level');
+        const cloudElement = document.getElementById('cloud');
+        const precipElement = document.getElementById('precip');
+        const uvIndexElement = document.getElementById('uv-index');
+        const windDirElement = document.getElementById('wind-dir');
+        const windDegreeElement = document.getElementById('wind-degree');
+        const windGustElement = document.getElementById('wind-gust');
+        const airCoElement = document.getElementById('air-co');
+        const airNo2Element = document.getElementById('air-no2');
+        const airO3Element = document.getElementById('air-o3');
+        const airSo2Element = document.getElementById('air-so2');
+        const airPm25Element = document.getElementById('air-pm25');
+        const airPm10Element = document.getElementById('air-pm10');
+        const airEpaElement = document.getElementById('air-epa');
+        const airDefraElement = document.getElementById('air-defra');
+        const forecastContainer = document.getElementById('forecast');
+        const hourlyForecastContainer = document.getElementById('hourly-forecast');
+
+        // Map Variables
+        let map;
+        let currentLocationMarker;
+        let currentLayer = 'temp';
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            getWeatherData('London');
+        });
+
+        // Initialize the map
+        function initMap() {
+            // Create a map centered on the world
+            map = L.map('weather-map').setView([20, 0], 2);
+
+            // Add base tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add layer control buttons functionality
+            document.querySelectorAll('.map-layer-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentLayer = this.getAttribute('data-layer');
+                    updateMapLayer();
+                });
+            });
+        }
+
+        // Update map with weather layer
+        function updateMapLayer() {
+            // Clear existing weather layer if any
+            map.eachLayer(layer => {
+                if (layer instanceof L.TileLayer && layer.options.attribution.includes('WeatherAPI')) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Add new weather layer based on selection
+            let layerUrl;
+            switch(currentLayer) {
+                case 'temp':
+                    layerUrl = `${BASE_URL}/maps/1.0/current/heatmap/{z}/{x}/{y}.png?key=${API_KEY}`;
+                    break;
+                case 'precip':
+                    layerUrl = `${BASE_URL}/maps/1.0/current/precipitation/{z}/{x}/{y}.png?key=${API_KEY}`;
+                    break;
+                case 'wind':
+                    layerUrl = `${BASE_URL}/maps/1.0/current/wind/{z}/{x}/{y}.png?key=${API_KEY}`;
+                    break;
+                case 'cloud':
+                    layerUrl = `${BASE_URL}/maps/1.0/current/cloud/{z}/{x}/{y}.png?key=${API_KEY}`;
+                    break;
+                default:
+                    layerUrl = `${BASE_URL}/maps/1.0/current/heatmap/{z}/{x}/{y}.png?key=${API_KEY}`;
+            }
+
+            L.tileLayer(layerUrl, {
+                attribution: 'Weather data by <a href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a>'
+            }).addTo(map);
+        }
+
+        // Update map marker for current location
+        function updateMapMarker(lat, lng, cityName) {
+            // Remove existing marker if any
+            if (currentLocationMarker) {
+                map.removeLayer(currentLocationMarker);
+            }
+
+            // Add new marker
+            currentLocationMarker = L.marker([lat, lng]).addTo(map)
+                .bindPopup(`<b>${cityName}</b><br>Current weather location`)
+                .openPopup();
+
+            // Center map on this location with some zoom
+            map.setView([lat, lng], 7);
+        }
 
         // Event Listeners
         searchButton.addEventListener('click', () => {
@@ -626,18 +830,24 @@
 
         locationButton.addEventListener('click', getLocationWeather);
 
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', () => {
-            getWeatherData('Dehradun');
-        });
-
         // Weather Functions
         async function getWeatherData(city) {
             showLoader();
             try {
-                const weatherData = await fetchData(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${city}&days=3&aqi=yes`);
+                // Get current weather and 7-day forecast with air quality
+                const response = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${city}&days=7&aqi=yes`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const weatherData = await response.json();
                 displayCurrentWeather(weatherData);
+                displayHourlyForecast(weatherData.forecast.forecastday[0].hour);
                 displayForecast(weatherData.forecast.forecastday);
+                
+                // Update map with current location
+                const { lat, lon } = weatherData.location;
+                updateMapMarker(lat, lon, weatherData.location.name);
+                updateMapLayer();
             } catch (error) {
                 alert(`Error: ${error.message}. Please check the city name or try again later.`);
             } finally {
@@ -658,10 +868,18 @@
                 });
                 
                 const { latitude, longitude } = position.coords;
-                const weatherData = await fetchData(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${latitude},${longitude}&days=3&aqi=yes`);
-                
+                const response = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${latitude},${longitude}&days=7&aqi=yes`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const weatherData = await response.json();
                 displayCurrentWeather(weatherData);
+                displayHourlyForecast(weatherData.forecast.forecastday[0].hour);
                 displayForecast(weatherData.forecast.forecastday);
+                
+                // Update map with current location
+                updateMapMarker(latitude, longitude, weatherData.location.name);
+                updateMapLayer();
             } catch (error) {
                 alert(`Error: ${error.message}. Unable to fetch location data.`);
             } finally {
@@ -669,62 +887,84 @@
             }
         }
 
-        async function fetchData(url) {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return await response.json();
-        }
-
-        // Display Functions
         function displayCurrentWeather(weatherData) {
             const { location, current } = weatherData;
-            const { name, localtime } = location;
-            const { 
-                temp_c, 
-                feelslike_c, 
-                humidity, 
-                pressure_mb, 
-                wind_kph, 
-                condition, 
-                uv, 
-                vis_km,
-                air_quality 
-            } = current;
-            const { astro } = weatherData.forecast.forecastday[0];
-
-            cityElement.textContent = name;
-            dateElement.textContent = formatDate(new Date(localtime));
-            temperatureElement.textContent = `${Math.round(temp_c)}°C`;
-            weatherIcon.src = `https:${condition.icon}`;
-            weatherIcon.alt = condition.text;
-            descriptionElement.textContent = condition.text;
-            feelsLikeElement.textContent = `${Math.round(feelslike_c)}°C`;
-            windElement.textContent = `${wind_kph} km/h`;
-            humidityElement.textContent = `${humidity}%`;
-            pressureElement.textContent = `${pressure_mb} hPa`;
-            uvIndexElement.textContent = uv.toFixed(1);
-            uvLevelElement.style.setProperty('--level-width', `${(uv / 12) * 100}%`);
-            sunriseElement.textContent = astro.sunrise;
-            sunsetElement.textContent = astro.sunset;
-            visibilityElement.textContent = `${vis_km} km`;
-
-            // Air Quality
-            const aqi = air_quality["us-epa-index"] || 1;
-            const aqiText = ['Good', 'Moderate', 'Unhealthy for Sensitive', 'Unhealthy', 'Very Unhealthy', 'Hazardous'][aqi - 1];
-            airQualityElement.textContent = aqiText;
-            aqiLevelElement.style.setProperty('--level-width', `${(aqi / 6) * 100}%`);
-
+            
+            // Location data
+            cityElement.textContent = `${location.name}, ${location.country}`;
+            stateElement.textContent = location.region ? `${location.region}` : '';
+            dateElement.textContent = formatDate(new Date(location.localtime));
+            
+            // Current weather data
+            temperatureElement.textContent = `${current.temp_c}°C`;
+            weatherIcon.src = `https:${current.condition.icon}`;
+            weatherIcon.alt = current.condition.text;
+            descriptionElement.textContent = current.condition.text;
+            feelsLikeElement.textContent = `${current.feelslike_c}°C`;
+            windElement.textContent = `${current.wind_kph} km/h`;
+            humidityElement.textContent = `${current.humidity}%`;
+            pressureElement.textContent = `${current.pressure_mb} hPa`;
+            visibilityElement.textContent = `${current.vis_km} km`;
+            cloudElement.textContent = `${current.cloud}%`;
+            precipElement.textContent = `${current.precip_mm} mm`;
+            uvIndexElement.textContent = current.uv;
+            
+            // Wind details
+            windDirElement.textContent = current.wind_dir;
+            windDegreeElement.textContent = `${current.wind_degree}°`;
+            windGustElement.textContent = `${current.gust_kph} km/h`;
+            
+            // Air quality data
+            if (current.air_quality) {
+                const aq = current.air_quality;
+                airCoElement.textContent = aq.co.toFixed(1);
+                airNo2Element.textContent = aq.no2.toFixed(1);
+                airO3Element.textContent = aq.o3.toFixed(1);
+                airSo2Element.textContent = aq.so2.toFixed(1);
+                airPm25Element.textContent = aq.pm2_5.toFixed(1);
+                airPm10Element.textContent = aq.pm10.toFixed(1);
+                
+                // EPA index mapping
+                const epaIndex = ['Good', 'Moderate', 'Unhealthy for sensitive', 'Unhealthy', 'Very unhealthy', 'Hazardous'];
+                airEpaElement.textContent = epaIndex[aq['us-epa-index'] - 1] || 'N/A';
+                
+                // UK Defra index mapping
+                const defraIndex = ['Low', 'Low', 'Low', 'Moderate', 'Moderate', 'Moderate', 'High', 'High', 'Very High'];
+                airDefraElement.textContent = defraIndex[aq['gb-defra-index'] - 1] || 'N/A';
+            }
+            
             weatherContent.classList.remove('hidden');
+        }
+
+        function displayHourlyForecast(hourlyData) {
+            hourlyForecastContainer.innerHTML = '';
+            
+            // Get current hour to start displaying from now
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            // Display next 24 hours of forecast
+            for (let i = currentHour; i < currentHour + 24 && i < hourlyData.length; i++) {
+                const hour = hourlyData[i];
+                const time = new Date(hour.time);
+                const hourString = time.getHours() + ':00';
+                
+                const hourlyItem = document.createElement('div');
+                hourlyItem.classList.add('hourly-item');
+                hourlyItem.innerHTML = `
+                    <p class="hourly-time">${hourString}</p>
+                    <img src="https:${hour.condition.icon}" alt="${hour.condition.text}">
+                    <p class="hourly-temp">${Math.round(hour.temp_c)}°</p>
+                `;
+                hourlyForecastContainer.appendChild(hourlyItem);
+            }
         }
 
         function displayForecast(forecastDays) {
             forecastContainer.innerHTML = '';
-            // Show only next 2 days (skip current day)
-            const next2Days = forecastDays.slice(1, 3);
             
-            next2Days.forEach(day => {
+            // Show all 7 days (including today)
+            forecastDays.forEach(day => {
                 const { date, day: dayData } = day;
                 const { maxtemp_c, mintemp_c, condition } = dayData;
                 
@@ -746,12 +986,18 @@
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
-                day: 'numeric' 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
 
         function formatDay(date) {
             return date.toLocaleDateString('en-US', { weekday: 'long' });
+        }
+
+        function formatHour(hour) {
+            return hour.toLocaleTimeString('en-US', { hour: '2-digit' });
         }
 
         function showLoader() {

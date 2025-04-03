@@ -278,84 +278,53 @@
             100% { width: 0; }
         }
 
-        .card-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .forecast-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .forecast-item:hover {
-            transform: rotate(2deg) scale(1.05);
-        }
-
-        .forecast-date {
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-
-        .forecast-item img {
-            width: 50px;
-            height: 50px;
-            margin: 10px 0;
-        }
-
-        .forecast-temp {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .forecast-desc {
-            font-size: 14px;
-            text-align: center;
-            color: #666;
-            text-transform: capitalize;
-            margin-top: 5px;
-        }
-
-        .hourly-forecast-container {
+        /* Forecast Containers */
+        .forecast-container {
             display: flex;
             overflow-x: auto;
             gap: 15px;
             padding: 10px 0;
         }
 
-        .hourly-item {
-            min-width: 100px;
+        .forecast-item {
+            min-width: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 10px;
+            padding: 15px;
             background: rgba(255, 255, 255, 0.15);
             border-radius: 10px;
             transition: all 0.3s ease;
         }
 
-        .hourly-item:hover {
+        .forecast-item:hover {
             transform: scale(1.05);
         }
 
-        .hourly-time {
+        .forecast-date {
             font-weight: 500;
             margin-bottom: 5px;
+            text-align: center;
         }
 
-        .hourly-item img {
-            width: 40px;
-            height: 40px;
+        .forecast-item img {
+            width: 50px;
+            height: 50px;
             margin: 5px 0;
         }
 
-        .hourly-temp {
+        .forecast-temp {
             font-size: 16px;
             font-weight: 600;
+            text-align: center;
+        }
+
+        .forecast-desc {
+            font-size: 12px;
+            text-align: center;
+            color: #666;
+            text-transform: capitalize;
+            margin-top: 5px;
         }
 
         /* Map Styles */
@@ -478,6 +447,11 @@
             #weather-map {
                 height: 300px;
             }
+
+            .forecast-item {
+                min-width: 100px;
+                padding: 10px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -503,6 +477,23 @@
 
             #weather-map {
                 height: 250px;
+            }
+
+            .forecast-item {
+                min-width: 90px;
+                padding: 8px;
+            }
+
+            .forecast-date {
+                font-size: 14px;
+            }
+
+            .forecast-temp {
+                font-size: 14px;
+            }
+
+            .forecast-desc {
+                font-size: 11px;
             }
         }
     </style>
@@ -625,12 +616,12 @@
 
             <div class="card">
                 <h3 class="section-title">Hourly Forecast (Next 24 Hours)</h3>
-                <div id="hourly-forecast" class="hourly-forecast-container"></div>
+                <div id="hourly-forecast" class="forecast-container"></div>
             </div>
 
             <div id="forecast-container" class="card">
                 <h3 class="section-title">7-Day Forecast</h3>
-                <div id="forecast" class="card-container"></div>
+                <div id="forecast" class="forecast-container"></div>
             </div>
 
             <div class="card map-container">
@@ -950,11 +941,12 @@
                 const hourString = time.getHours() + ':00';
                 
                 const hourlyItem = document.createElement('div');
-                hourlyItem.classList.add('hourly-item');
+                hourlyItem.classList.add('forecast-item');
                 hourlyItem.innerHTML = `
-                    <p class="hourly-time">${hourString}</p>
+                    <p class="forecast-date">${hourString}</p>
                     <img src="https:${hour.condition.icon}" alt="${hour.condition.text}">
-                    <p class="hourly-temp">${Math.round(hour.temp_c)}°</p>
+                    <p class="forecast-temp">${Math.round(hour.temp_c)}°</p>
+                    <p class="forecast-desc">${hour.condition.text}</p>
                 `;
                 hourlyForecastContainer.appendChild(hourlyItem);
             }
@@ -963,18 +955,21 @@
         function displayForecast(forecastDays) {
             forecastContainer.innerHTML = '';
             
-            // Show all 7 days (including today)
+            // Show all 7 days
             forecastDays.forEach(day => {
                 const { date, day: dayData } = day;
-                const { maxtemp_c, mintemp_c, condition } = dayData;
+                const { maxtemp_c, mintemp_c, condition, avghumidity, daily_chance_of_rain } = dayData;
+                const dayName = formatDay(new Date(date));
                 
                 const forecastItem = document.createElement('div');
-                forecastItem.classList.add('card', 'forecast-item');
+                forecastItem.classList.add('forecast-item');
                 forecastItem.innerHTML = `
-                    <p class="forecast-date">${formatDay(new Date(date))}</p>
+                    <p class="forecast-date">${dayName}</p>
                     <img src="https:${condition.icon}" alt="${condition.text}">
                     <p class="forecast-temp">${Math.round(maxtemp_c)}° / ${Math.round(mintemp_c)}°</p>
                     <p class="forecast-desc">${condition.text}</p>
+                    <p class="forecast-desc">Humidity: ${avghumidity}%</p>
+                    <p class="forecast-desc">Rain: ${daily_chance_of_rain}%</p>
                 `;
                 forecastContainer.appendChild(forecastItem);
             });
@@ -993,7 +988,7 @@
         }
 
         function formatDay(date) {
-            return date.toLocaleDateString('en-US', { weekday: 'long' });
+            return date.toLocaleDateString('en-US', { weekday: 'short' });
         }
 
         function formatHour(hour) {

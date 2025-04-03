@@ -67,8 +67,9 @@
 
         .search-container {
             display: flex;
+            align-items: center; /* Vertically center the elements */
             margin-bottom: 30px;
-            max-width: 500px;
+            max-width: 400px; /* Reduced max-width to make the search bar smaller */
             margin-left: auto;
             margin-right: auto;
             animation: slideIn 0.5s ease-out;
@@ -89,6 +90,7 @@
             background-color: var(--card-bg);
             box-shadow: var(--card-shadow);
             transition: all 0.3s ease;
+            width: 100%; /* Ensure it takes the available space */
         }
 
         #search-input:focus {
@@ -100,7 +102,7 @@
             background: var(--gradient);
             color: white;
             cursor: pointer;
-            padding: 0 20px;
+            padding: 12px 15px; /* Adjusted padding for better fit */
             font-size: 18px;
             transition: all 0.3s ease;
         }
@@ -111,7 +113,7 @@
 
         #location-button {
             border-radius: 30px;
-            margin-left: 10px;
+            margin-left: 0; /* Removed margin to make it snug */
         }
 
         #search-button:hover, #location-button:hover {
@@ -735,7 +737,7 @@
             map = L.map('weather-map').setView([20, 0], 2);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
             document.querySelectorAll('.map-layer-btn').forEach(btn => {

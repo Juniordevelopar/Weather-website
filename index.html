@@ -6,7 +6,6 @@
     <title>ClimateView - Advanced Weather Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Leaflet CSS for map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -278,7 +277,6 @@
             100% { width: 0; }
         }
 
-        /* Forecast Containers */
         .forecast-container {
             display: flex;
             overflow-x: auto;
@@ -327,7 +325,6 @@
             margin-top: 5px;
         }
 
-        /* Map Styles */
         #weather-map {
             height: 400px;
             width: 100%;
@@ -687,14 +684,11 @@
         <p>Created with ❤️ by <a href="#" target="_blank">Ashish Kumar</a> | Weather data by <a href="https://weatherapi.com/" target="_blank">WeatherAPI</a></p>
     </footer>
 
-    <!-- Leaflet JS for map -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // API Configuration
         const API_KEY = 'a631012c691741bf89193110250304';
         const BASE_URL = 'https://api.weatherapi.com/v1';
 
-        // DOM Elements
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const locationButton = document.getElementById('location-button');
@@ -728,28 +722,22 @@
         const forecastContainer = document.getElementById('forecast');
         const hourlyForecastContainer = document.getElementById('hourly-forecast');
 
-        // Map Variables
         let map;
         let currentLocationMarker;
         let currentLayer = 'temp';
 
-        // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             getWeatherData('London');
         });
 
-        // Initialize the map
         function initMap() {
-            // Create a map centered on the world
             map = L.map('weather-map').setView([20, 0], 2);
 
-            // Add base tile layer (OpenStreetMap)
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            // Add layer control buttons functionality
             document.querySelectorAll('.map-layer-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     currentLayer = this.getAttribute('data-layer');
@@ -758,16 +746,13 @@
             });
         }
 
-        // Update map with weather layer
         function updateMapLayer() {
-            // Clear existing weather layer if any
             map.eachLayer(layer => {
                 if (layer instanceof L.TileLayer && layer.options.attribution.includes('WeatherAPI')) {
                     map.removeLayer(layer);
                 }
             });
 
-            // Add new weather layer based on selection
             let layerUrl;
             switch(currentLayer) {
                 case 'temp':
@@ -791,23 +776,18 @@
             }).addTo(map);
         }
 
-        // Update map marker for current location
         function updateMapMarker(lat, lng, cityName) {
-            // Remove existing marker if any
             if (currentLocationMarker) {
                 map.removeLayer(currentLocationMarker);
             }
 
-            // Add new marker
             currentLocationMarker = L.marker([lat, lng]).addTo(map)
                 .bindPopup(`<b>${cityName}</b><br>Current weather location`)
                 .openPopup();
 
-            // Center map on this location with some zoom
             map.setView([lat, lng], 7);
         }
 
-        // Event Listeners
         searchButton.addEventListener('click', () => {
             const city = searchInput.value.trim();
             if (city) getWeatherData(city);
@@ -821,11 +801,9 @@
 
         locationButton.addEventListener('click', getLocationWeather);
 
-        // Weather Functions
         async function getWeatherData(city) {
             showLoader();
             try {
-                // Get current weather and 7-day forecast with air quality
                 const response = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${city}&days=7&aqi=yes`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -835,7 +813,6 @@
                 displayHourlyForecast(weatherData.forecast.forecastday[0].hour);
                 displayForecast(weatherData.forecast.forecastday);
                 
-                // Update map with current location
                 const { lat, lon } = weatherData.location;
                 updateMapMarker(lat, lon, weatherData.location.name);
                 updateMapLayer();
@@ -868,7 +845,6 @@
                 displayHourlyForecast(weatherData.forecast.forecastday[0].hour);
                 displayForecast(weatherData.forecast.forecastday);
                 
-                // Update map with current location
                 updateMapMarker(latitude, longitude, weatherData.location.name);
                 updateMapLayer();
             } catch (error) {
@@ -881,12 +857,10 @@
         function displayCurrentWeather(weatherData) {
             const { location, current } = weatherData;
             
-            // Location data
             cityElement.textContent = `${location.name}, ${location.country}`;
             stateElement.textContent = location.region ? `${location.region}` : '';
             dateElement.textContent = formatDate(new Date(location.localtime));
             
-            // Current weather data
             temperatureElement.textContent = `${current.temp_c}°C`;
             weatherIcon.src = `https:${current.condition.icon}`;
             weatherIcon.alt = current.condition.text;
@@ -900,12 +874,10 @@
             precipElement.textContent = `${current.precip_mm} mm`;
             uvIndexElement.textContent = current.uv;
             
-            // Wind details
             windDirElement.textContent = current.wind_dir;
             windDegreeElement.textContent = `${current.wind_degree}°`;
             windGustElement.textContent = `${current.gust_kph} km/h`;
             
-            // Air quality data
             if (current.air_quality) {
                 const aq = current.air_quality;
                 airCoElement.textContent = aq.co.toFixed(1);
@@ -915,11 +887,9 @@
                 airPm25Element.textContent = aq.pm2_5.toFixed(1);
                 airPm10Element.textContent = aq.pm10.toFixed(1);
                 
-                // EPA index mapping
                 const epaIndex = ['Good', 'Moderate', 'Unhealthy for sensitive', 'Unhealthy', 'Very unhealthy', 'Hazardous'];
                 airEpaElement.textContent = epaIndex[aq['us-epa-index'] - 1] || 'N/A';
                 
-                // UK Defra index mapping
                 const defraIndex = ['Low', 'Low', 'Low', 'Moderate', 'Moderate', 'Moderate', 'High', 'High', 'Very High'];
                 airDefraElement.textContent = defraIndex[aq['gb-defra-index'] - 1] || 'N/A';
             }
@@ -930,11 +900,9 @@
         function displayHourlyForecast(hourlyData) {
             hourlyForecastContainer.innerHTML = '';
             
-            // Get current hour to start displaying from now
             const now = new Date();
             const currentHour = now.getHours();
             
-            // Display next 24 hours of forecast
             for (let i = currentHour; i < currentHour + 24 && i < hourlyData.length; i++) {
                 const hour = hourlyData[i];
                 const time = new Date(hour.time);
@@ -955,7 +923,6 @@
         function displayForecast(forecastDays) {
             forecastContainer.innerHTML = '';
             
-            // Show all 7 days
             forecastDays.forEach(day => {
                 const { date, day: dayData } = day;
                 const { maxtemp_c, mintemp_c, condition, avghumidity, daily_chance_of_rain } = dayData;
@@ -975,7 +942,6 @@
             });
         }
 
-        // Utility Functions
         function formatDate(date) {
             return date.toLocaleDateString('en-US', { 
                 weekday: 'long', 
